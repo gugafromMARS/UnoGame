@@ -1,6 +1,6 @@
 package UNO.Player;
 
-public class Player {
+public class Player implements Runnable{
 
     private String name;
     
@@ -8,6 +8,11 @@ public class Player {
             this.name = name;
     }
 
-    //receive card 
+    //method drawcard
+
+    //Show 
+
+    //method playCard
+    // Should include the message "uno"
     
 }
