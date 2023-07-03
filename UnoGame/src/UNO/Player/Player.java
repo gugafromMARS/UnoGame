@@ -1,7 +1,7 @@
 package UNO.Player;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,56 +11,44 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 
 import UNO.UnoCard;
+import server.Server;
 
 public class Player { // implements Runnable
 
     private String name;
-    private Boolean isAlive;
-    private ArrayList<UnoCard> handCards = new ArrayList<UnoCard>();
+    private ArrayList<UnoCard> handCards;
+    private Server.PlayerHandler ph;
 
 
-    public Player(String name, ArrayList<UnoCard> handCards) throws Exception {
+    public Player(String name) {
         this.name = name;
-        this.isAlive = true;
-        try{
-            if (handCards.size() > 7) {
-                throw new Exception("The player can't have more than 7 cards");
-            }
-
-            this.handCards = handCards;
-
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
-        
     }
-    
+
+    public Player(Server.PlayerHandler ph) {
+        this.ph = ph;
+    }
+
+    public static void main(String[] args) {
+        Player player = new Player("ijip");
+
+    }
+
+
     public String getName() {
         return name;
     }
 
-    public Boolean getIsAlive() {
-        return isAlive;
-    }
 
     public ArrayList<UnoCard> getHandCards() {
         return handCards;
     }
 
-    public void printHandCards() {
-        System.out.println("Card # » Description/Type (Color, Value) ");
-        handCards.forEach(      (k) -> {
-            System.out.println(handCards.indexOf(k) + " » " + k);
-        });
-        
-    }
 
     public UnoCard[] playCard(UnoCard cardOnGame) {
-        printHandCards();
         System.out.println(
                 "Choose the number of the card to play \n (if more than one, please use the numbers separated by commas): ");
         
-        /* 
+        /*
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         UnoCard[] cardToPlay = Arrays.stream(in.readLine().split(","))
                                                 .mapToInt(Integer::parseInt)
@@ -116,9 +104,6 @@ public class Player { // implements Runnable
     }
 
 
-
-
-
     //method drawcard from deck
 
     //Show available cards
@@ -127,5 +112,36 @@ public class Player { // implements Runnable
 
     //method playCard
     // Should include the message "uno"
+
+
+    private class GameReceiver implements Runnable {
+
+        BufferedReader in;
+        ObjectInputStream objIn;
+
+        public GameReceiver(BufferedReader in, ObjectInputStream objIn) {
+            this.in = in;
+            this.objIn = objIn;
+        }
+
+        @Override
+        public void run() {
+                try {
+//                    receiveMessage();
+                    receiveHand();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+        }
+
+        private void receiveHand() throws IOException, ClassNotFoundException {
+            ArrayList<UnoCard> cards = (ArrayList<UnoCard>) objIn.readObject();
+            if(cards != null) {
+                handCards = cards;
+            }
+        }
+    }
     
 }
