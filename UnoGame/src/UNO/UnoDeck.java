@@ -39,5 +39,8 @@ public class UnoDeck {
         return card;
     }
 
+    public List<UnoCard> getDeck() {
+        return deck;
+    }
 }
 

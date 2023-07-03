@@ -9,6 +9,6 @@ public class Main {
             System.out.println(card);
         }
         deck.drawCard();
-        player.drawnCard(deck.drawCard());
+//        player.drawnCard(deck.drawCard());
     }
 }
