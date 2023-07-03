@@ -3,6 +3,7 @@ public class UnoCard {
 
     private CardColor color;
     private CardValue value;
+    
 
     public UnoCard(CardColor color, CardValue value) {
         this.color = color;

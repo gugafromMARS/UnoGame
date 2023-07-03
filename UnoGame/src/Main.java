@@ -8,7 +8,8 @@ public class Main {
         for (UnoCard card : deck.deck) {
             System.out.println(card);
         }
-        //deck.drawCard();
-        //player.drawnCard(deck.drawCard());
+        deck.drawCard();
+//        player.drawnCard(deck.drawCard());
+
     }
 }
