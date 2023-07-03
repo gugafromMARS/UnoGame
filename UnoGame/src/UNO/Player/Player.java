@@ -9,6 +9,7 @@ public class Player { // implements Runnable
             this.name = name;
     }
 
+
     //method drawcard from deck
 
     //Show available cards
