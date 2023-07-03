@@ -71,10 +71,6 @@ public class UnoGame {
 
     private UnoCard drawCard() {
         int randomNum = random.nextInt(0, deck.getDeck().size());
-        return removeCardFromDeck(randomNum);
-    }
-
-    private UnoCard removeCardFromDeck(int randomNum){
         return deck.getDeck().remove(randomNum);
     }
 
