@@ -33,6 +33,9 @@ public class Player { // implements Runnable
 
     }
 
+    public void setHandCards(ArrayList<UnoCard> handCards) {
+        this.handCards = handCards;
+    }
 
     public String getName() {
         return name;
@@ -47,47 +50,34 @@ public class Player { // implements Runnable
     public UnoCard[] playCard(UnoCard cardOnGame) {
         System.out.println(
                 "Choose the number of the card to play \n (if more than one, please use the numbers separated by commas): ");
-        
         /*
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         UnoCard[] cardToPlay = Arrays.stream(in.readLine().split(","))
                                                 .mapToInt(Integer::parseInt)
                                                 .forEach(handCards::get);
         */
-
-
         Scanner in = new Scanner(System.in);
-
         UnoCard cardToPlay[] = new UnoCard[handCards.size()];
-        
         int i = 0;
         while (in.hasNext()) {
-
             if (in.hasNextInt())
                 cardToPlay[i++] = handCards.get(in.nextInt());
             else
                 in.next();
         }
-        
         in.close();
-        
         return cardToPlay;
     }
 
 
     public void drawCard(UnoCard card) {
-        
         handCards.add(card);
     }
 
     public void sortHandCards(){
-
-        // Based on: https://www.bezkoder.com/java-sort-arraylist-of-objects/#Sort_ArrayList_of_Objects_by_field_in_Java 
-
+        // Based on: https://www.bezkoder.com/java-sort-arraylist-of-objects/#Sort_ArrayList_of_Objects_by_field_in_Java
         Comparator<UnoCard> unoCardComparator = Comparator.comparing(UnoCard::getColor)
                                                           .thenComparing(UnoCard::getValue);
-
-        
         ArrayList<UnoCard> sortedCards = (ArrayList<UnoCard>) handCards
 				.stream().sorted(unoCardComparator)
                 .collect(Collectors.toList());
@@ -95,11 +85,9 @@ public class Player { // implements Runnable
         this.handCards = sortedCards;
     }
 
-
     private enum PlayerMenu {
         SHOW_HAND_CARDS,
         SHOW_PLAYABLE_CARDS,
-
 
     }
 
@@ -114,34 +102,6 @@ public class Player { // implements Runnable
     // Should include the message "uno"
 
 
-    private class GameReceiver implements Runnable {
 
-        BufferedReader in;
-        ObjectInputStream objIn;
-
-        public GameReceiver(BufferedReader in, ObjectInputStream objIn) {
-            this.in = in;
-            this.objIn = objIn;
-        }
-
-        @Override
-        public void run() {
-                try {
-//                    receiveMessage();
-                    receiveHand();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException(e);
-                }
-        }
-
-        private void receiveHand() throws IOException, ClassNotFoundException {
-            ArrayList<UnoCard> cards = (ArrayList<UnoCard>) objIn.readObject();
-            if(cards != null) {
-                handCards = cards;
-            }
-        }
-    }
     
 }

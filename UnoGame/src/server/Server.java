@@ -17,8 +17,8 @@ public class Server {
         Server server = new Server();
         server.startServer(1010);
         server.acceptPlayers();
-        Thread uno = new Thread(new UnoGame(players));
-        uno.start();
+//        Thread uno = new Thread(new UnoGame(players));
+//        uno.start();
     }
 
     private void startServer(int port) {
@@ -33,7 +33,7 @@ public class Server {
 
     private void acceptPlayers() {
 
-        if(players.size() <= 3) {
+        if(players.size() < 3) {
             System.out.println("Waiting for players to join...");
             try {
                 Socket socket = serverSocket.accept();// blocking method!
@@ -47,6 +47,7 @@ public class Server {
             }
         }
         else{
+            System.out.println("New Uno Game started!");
             UnoGame uno =  new UnoGame(players);
             new Thread(uno).start();
             players = new ArrayList<>();
@@ -55,61 +56,87 @@ public class Server {
 
     }
 
-
-
-    private void broadcast(String message, PlayerHandler p) {
-        players.stream()
-                .filter(player -> !player.equals(p))
-                .forEach(player -> player.sendMessageToPlayer( message));
-    }
-
-
     public class PlayerHandler implements Runnable {
 
         private Socket socket;
         private BufferedReader in;
         private PrintWriter out;
-
+        private String username;
+        private boolean isRunning;
 
         public PlayerHandler(Socket socket) {
             this.socket = socket;
+            isRunning = true;
         }
         @Override
         public void run() {
             try {
                 initializeBuffers();
-                welcomeToPlayer();
-//               while (gameIsOn) {
-//
-//               }
+                welcomeToClient();
+//                handleClient();
+               while (isRunning) {
 
+               }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-
         }
-
         private void initializeBuffers() throws IOException {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
         }
-
-        private void welcomeToPlayer() throws IOException {
+        private void welcomeToClient() throws IOException {
             System.out.println("New player joined!");
-            sendMessageToPlayer("Welcome to Uno Game");
         }
 
         public void sendMessageToPlayer(String message) {
             out.println(message);
         }
 
-        public String receiveMessageFromPlayer(){
-            return null;
+        private void handleClient() {
+            if(this.socket.isClosed()){
+                return;
+            }
+            // Melhorar isto, ... nao pode estar neste loop, poorque nem sempre e ele a jogar
+            sendMessageToPlayer("It's your turn");
+            receiveMessageFromPlayer();
+            handleClient();
         }
 
+        public String receiveMessageFromPlayer(){
+            String message = null;
+            try {
+                // ver esta parte.
+                 message = in.readLine();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return message;
+        }
 
+        public String insertUsername() {
+            sendMessageToPlayer("Insert your username: ");
+            String user = null;
+            try {
+                user = in.readLine();
+            } catch (IOException e) {
+                System.out.println("not inserted");
+            }
+            return user;
+        }
 
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public void clientDisconnect(){
+            isRunning = false;
+        }
 
     }
 

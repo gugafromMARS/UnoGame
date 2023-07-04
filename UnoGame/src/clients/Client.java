@@ -80,9 +80,12 @@ public class Client {
 
         private void readMessage() throws IOException {
             String message = in.readLine();
-            if(message != null) {
-                System.out.println(message);
+            if(message == null) {
+                System.out.println("Disconnected");
+                System.exit(1);
             }
+            System.out.println(message);
+            readMessage();
         }
     }
 }
