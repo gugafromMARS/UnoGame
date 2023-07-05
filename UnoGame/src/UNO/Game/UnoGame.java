@@ -2,6 +2,7 @@ package UNO.Game;
 import UNO.Player.Player;
 import UNO.UnoCard;
 import UNO.UnoDeck;
+import messages.Messages;
 import server.Server;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.Random;
 public class UnoGame implements Runnable{
 
     private UnoDeck deck;
+    private UnoCard previousCard;
     private List<Server.PlayerHandler> playerHandlers;
     private List<Player> players;
     private List<UnoCard> playedCards;
@@ -23,6 +25,7 @@ public class UnoGame implements Runnable{
         random = new Random();
         isGameOn = true;
         playedCards = new ArrayList<>();
+        previousCard = null;
     }
 
     public List<Server.PlayerHandler> getPlayerHandlers() {
@@ -39,6 +42,12 @@ public class UnoGame implements Runnable{
 
     private void messageToAll(String message){
         playerHandlers.forEach(pH -> pH.sendMessageToPlayer(message));
+    }
+
+    private void broadcast(String message, Server.PlayerHandler ph){
+        playerHandlers.stream()
+                .filter(pHandler -> !pHandler.equals(ph))
+                .forEach(pHandler -> pHandler.sendMessageToPlayer(message));
     }
 
     private void messageToPlayer(String message, Server.PlayerHandler ph){
@@ -81,10 +90,13 @@ public class UnoGame implements Runnable{
                         break;
                     }
                 }
-                ph.setUsername(user);
-                break;
             }
+            ph.setUsername(user);
         }
+    }
+
+    private void validateUsername(Server.PlayerHandler ph){
+
     }
 
     private void giveCardsToPlayer() {
@@ -97,7 +109,7 @@ public class UnoGame implements Runnable{
 
     private ArrayList<UnoCard> initialCards() {
         ArrayList<UnoCard> cardsToPlayer = new ArrayList<>();
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < 7; i++) {
             int randomNum = random.nextInt(0, getDeck().size());
             cardsToPlayer.add(getDeck().remove(randomNum));
         }
@@ -108,11 +120,16 @@ public class UnoGame implements Runnable{
         while (isGameOn){
             for (Player player : players){
                 Server.PlayerHandler ph = player.getPh();
-                messageToPlayer(ph.getUsername() + " it's your turn!", ph);
+                roundMessages(ph);
                 infoPlayerCards(player);
-                dealWithCard(ph.receiveMessageFromPlayer());
+                dealWithCard(ph.receiveMessageFromPlayer(), player);
             }
         }
+    }
+
+    private void roundMessages(Server.PlayerHandler ph){
+        messageToPlayer(ph.getUsername() + Messages.YOUR_TURN, ph);
+        broadcast(ph.getUsername() + Messages.WAIT_TURN, ph);
     }
 
     private void infoPlayerCards(Player player) {
@@ -132,20 +149,59 @@ public class UnoGame implements Runnable{
     }
 
     private void firstCard(){
+        // nao deve a primeira carta random ser uma especial para nao prejudicar o primeiro player comparativamente aos restantes
         int num = random.nextInt(0, getDeck().size());
         UnoCard card = getDeck().remove(num);
+        previousCard = card;
         managePlayedCards(card);
         messageToAll("Uno starts with " + card.getValue() + " " + card.getColor());
     }
-    private void dealWithCard(String card){
-        //remover da mao do player, usar o command pattern para evitar switch!
-        if (card.contains("/special")){
-
+    private void dealWithCard(String playerCardSuggestion, Player player){
+        if(playerCardSuggestion.contains("/special")){
+            manageSpecial(playerCardSuggestion, player);
             return;
         }
-        //
+        manageNumeric(playerCardSuggestion, player);
+    }
+
+    private void manageSpecial(String playerCardSuggestion, Player player) {
 
     }
+
+    private void manageNumeric(String playerCardSuggestion, Player player) {
+        UnoCard playerCard = null;
+        for (UnoCard c : player.getHandCards()){
+            if(playerCardSuggestion.contains(c.getValue().getDescription())) {
+                playerCard = c;
+                break;
+            }
+        }
+        validateCard(playerCard, player);
+    }
+
+    private void validateCard(UnoCard playerCard, Player player) {
+        if(playerCard.getColor().equals(previousCard.getColor())){
+            playerSuggestionAccepted(playerCard, player);
+            System.out.println(player.getHandCards());
+            return;
+        }
+        if(playerCard.getValue().equals(previousCard.getValue())){
+            playerSuggestionAccepted(playerCard, player);
+            System.out.println(player.getHandCards());
+            return;
+        }
+        messageToPlayer("CAN'T PLAY THAT CARD, TRY ANOTHER ONE!!!", player.getPh());
+        dealWithCard(player.getPh().receiveMessageFromPlayer(), player);
+    }
+
+    private void playerSuggestionAccepted(UnoCard playerCard, Player player){
+        takeCardsFromPlayer(playerCard, player);
+        playedCards.add(playerCard);
+        previousCard = playerCard;
+        messageToAll("Card in table now is : " + previousCard.getValue() + " " + previousCard.getColor());
+    }
+
+
     private void takeCardsFromPlayer(UnoCard card, Player player){
         player.getHandCards().remove(card);
     }
