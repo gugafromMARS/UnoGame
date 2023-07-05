@@ -5,5 +5,5 @@ import server.Server;
 
 public interface SpecialCardHandler{
 
-    void execute(UnoGame game, Server.PlayerHandler player);
+    void execute(UnoGame game);
 }
