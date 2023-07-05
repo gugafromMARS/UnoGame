@@ -13,6 +13,7 @@ public class UnoGame implements Runnable{
     private UnoDeck deck;
     private List<Server.PlayerHandler> playerHandlers;
     private List<Player> players;
+    private List<UnoCard> playedCards;
     private Random random;
     private  boolean isGameOn;
 
@@ -21,6 +22,7 @@ public class UnoGame implements Runnable{
         deck = new UnoDeck();
         random = new Random();
         isGameOn = true;
+        playedCards = new ArrayList<>();
     }
 
     public List<Server.PlayerHandler> getPlayerHandlers() {
@@ -104,20 +106,38 @@ public class UnoGame implements Runnable{
 
     private void playRound() {
         while (isGameOn){
-            for (Server.PlayerHandler ph : playerHandlers){
-                messageToPlayer("It's your turn, write /special or /normal than the value!", ph);
-                manageCard(ph.receiveMessageFromPlayer());
+            for (Player player : players){
+                Server.PlayerHandler ph = player.getPh();
+                messageToPlayer(ph.getUsername() + " it's your turn!", ph);
+                infoPlayerCards(player);
+                dealWithCard(ph.receiveMessageFromPlayer());
             }
         }
+    }
+
+    private void infoPlayerCards(Player player) {
+        ArrayList<UnoCard> playerHandCards = player.getHandCards();
+        StringBuilder sb = new StringBuilder();
+        sb.append("Your cards are :");
+        sb.append(" ");
+
+        for(UnoCard card : playerHandCards){
+            sb.append(card.getValue());
+            sb.append(" / ");
+            sb.append(card.getColor());
+            sb.append(" || ");
+        }
+        String cardsInfo = sb.toString();
+        messageToPlayer(cardsInfo, player.getPh());
     }
 
     private void firstCard(){
         int num = random.nextInt(0, getDeck().size());
         UnoCard card = getDeck().remove(num);
+        managePlayedCards(card);
         messageToAll("Uno starts with " + card.getValue() + " " + card.getColor());
     }
-
-    private void manageCard(String card){
+    private void dealWithCard(String card){
         //remover da mao do player, usar o command pattern para evitar switch!
         if (card.contains("/special")){
 
@@ -126,8 +146,10 @@ public class UnoGame implements Runnable{
         //
 
     }
-
     private void takeCardsFromPlayer(UnoCard card, Player player){
         player.getHandCards().remove(card);
+    }
+    private void managePlayedCards(UnoCard card) {
+        playedCards.add(card);
     }
 }
