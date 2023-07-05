@@ -1,10 +1,18 @@
 package UNO.Game;
+import UNO.CardColor;
+import UNO.CardValue;
 import UNO.Player.Player;
 import UNO.UnoCard;
 import UNO.UnoDeck;
+import UNO.specialcards.SpecialCard;
+import UNO.specialcards.Switch;
 import messages.Messages;
 import server.Server;
+
+import java.awt.*;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -118,13 +126,52 @@ public class UnoGame implements Runnable{
 
     private void playRound() {
         while (isGameOn){
-            for (Player player : players){
-                Server.PlayerHandler ph = player.getPh();
+                Server.PlayerHandler ph = currentPlayer.getPh();
                 roundMessages(ph);
-                infoPlayerCards(player);
-                dealWithCard(ph.receiveMessageFromPlayer(), player);
-            }
+                infoPlayerCards(currentPlayer);
+
+                while (playerIsPlaying){
+                    playerMenu(currentPlayer);
+                }
+                playerIsPlaying = true;
+                //dealWithCard(ph.receiveMessageFromPlayer(), currentPlayer);
+                nextPlayer();
         }
+    }
+
+     private void drawCard(Player p){
+
+        UnoCard c = deck.getDeck().get(random.nextInt(0, deck.getDeck().size()));
+        deck.getDeck().remove(c);
+        p.getHandCards().add(c);
+        //infoPlayerCards(p);
+        p.getPh().sendMessageToPlayer("You got a " + c.getValue() + " / " + c.getColor());
+
+    }
+
+    public void drawNcards(int n, Player p){
+        for(int i=0;i<n;i++){
+            drawCard(p);
+        }
+    }
+
+    private void playerMenu(Player p) {
+        p.getPh().sendMessageToPlayer("You will play a card [insert your selected card] or your alternative options is: /draw ");
+
+        String option = p.getPh().receiveMessageFromPlayer();
+        switch (option.trim()){
+            case "/draw":
+                drawCard(p);
+                break;
+            case "/multiple":
+//                playerIsPlaying = false;
+            default:
+                dealWithCard(option, currentPlayer);
+                playerIsPlaying = false;
+                break;
+        }
+
+
     }
 
     private void roundMessages(Server.PlayerHandler ph){
@@ -151,7 +198,16 @@ public class UnoGame implements Runnable{
     private void firstCard(){
         // nao deve a primeira carta random ser uma especial para nao prejudicar o primeiro player comparativamente aos restantes
         int num = random.nextInt(0, getDeck().size());
-        UnoCard card = getDeck().remove(num);
+        UnoCard card = getDeck().get(num);
+        if(card.getColor() == CardColor.WILD
+                || card.getValue() == CardValue.PLUS_FOUR
+                || card.getValue() == CardValue.PLUS_TWO
+                || card.getValue() == CardValue.SKIP
+                || card.getValue() == CardValue.SWITCH) {
+
+            firstCard();
+        }
+        getDeck().remove(card);
         previousCard = card;
         managePlayedCards(card);
         messageToAll("Uno starts with " + card.getValue() + " " + card.getColor());
@@ -165,29 +221,57 @@ public class UnoGame implements Runnable{
     }
 
     private void manageSpecial(String playerCardSuggestion, Player player) {
-
+        UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
+        validateCard(playerCard, player);
+        executeSpecialCard(playerCard);
     }
 
     private void manageNumeric(String playerCardSuggestion, Player player) {
-        UnoCard playerCard = null;
-        for (UnoCard c : player.getHandCards()){
-            if(playerCardSuggestion.contains(c.getValue().getDescription())) {
-                playerCard = c;
-                break;
-            }
-        }
+        UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
         validateCard(playerCard, player);
     }
 
-    private void validateCard(UnoCard playerCard, Player player) {
-        if(playerCard.getColor().equals(previousCard.getColor())){
-            playerSuggestionAccepted(playerCard, player);
-            System.out.println(player.getHandCards());
+    private UnoCard getCardFromPlayer(String playerCardSuggestion, Player player) {
+        for (UnoCard c : player.getHandCards()) {
+            if (playerCardSuggestion.contains(c.getValue().toString().toLowerCase()) &&
+                    playerCardSuggestion.contains(c.getColor().toString().toLowerCase())) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    private void executeSpecialCard(UnoCard card){
+        if(card.getValue() == CardValue.SWITCH){
+            SpecialCard.SWITCH.getSpecialCardHandler().execute(this);
             return;
         }
-        if(playerCard.getValue().equals(previousCard.getValue())){
+        if(card.getValue() == CardValue.SKIP){
+            SpecialCard.SKIP.getSpecialCardHandler().execute(this);
+            return;
+        }
+        if(card.getValue() == CardValue.PLUS_TWO){
+            SpecialCard.PLUS_TWO.getSpecialCardHandler().execute(this);
+            return;
+        }
+        if(card.getValue() == CardValue.PLUS_FOUR){
+            SpecialCard.PLUS_FOUR.getSpecialCardHandler().execute(this);
+            SpecialCard.NO_VALUE.getSpecialCardHandler().execute(this);
+            return;
+        }
+        if(card.getValue() == CardValue.NO_VALUE){
+            SpecialCard.NO_VALUE.getSpecialCardHandler().execute(this);
+        }
+
+
+    }
+
+    private void validateCard(UnoCard playerCard, Player player) {
+        if(playerCard.getColor().toString().toLowerCase().equals(previousCard.getColor().toString().toLowerCase())
+                || playerCard.getValue().toString().toLowerCase().equals(previousCard.getValue().toString().toLowerCase())
+                || playerCard.getValue() == CardValue.NO_VALUE
+                || playerCard.getValue() == CardValue.PLUS_FOUR) {
             playerSuggestionAccepted(playerCard, player);
-            System.out.println(player.getHandCards());
             return;
         }
         messageToPlayer("CAN'T PLAY THAT CARD, TRY ANOTHER ONE!!!", player.getPh());
@@ -208,4 +292,64 @@ public class UnoGame implements Runnable{
     private void managePlayedCards(UnoCard card) {
         playedCards.add(card);
     }
+
+    public List<Player> getPlayers() {
+        return players;
+    }
+
+    private int currentPlayerId = 0;
+    private Player currentPlayer;
+    private boolean gameDirection = true;
+
+    private void nextPlayer(){
+        if(gameDirection){
+            currentPlayerId++;
+            currentPlayerId = (currentPlayerId == players.size()) ? 0 : currentPlayerId;
+        }
+        else {
+            currentPlayerId--;
+            currentPlayerId = (currentPlayerId ==-1) ? players.size()-1 : currentPlayerId;
+        }
+        currentPlayer = players.get(currentPlayerId);
+    }
+    public void previousPlayer(){
+        if(gameDirection){
+            currentPlayerId--;
+            currentPlayerId = (currentPlayerId ==-1) ? players.size()-1 : currentPlayerId;
+        }
+        else {
+            currentPlayerId++;
+            currentPlayerId = (currentPlayerId == players.size()) ? 0 : currentPlayerId;
+
+        }
+        currentPlayer = players.get(currentPlayerId);
+    }
+
+    public void setGameDirection(boolean gameDirection) {
+        this.gameDirection = gameDirection;
+    }
+
+    public boolean isGameDirection() {
+        return gameDirection;
+    }
+
+    public void getNextPlayer(){
+        nextPlayer();
+    }
+
+    public UnoCard getPreviousCard() {
+        return previousCard;
+    }
+    public void createNewCard(){
+        currentPlayer.getPh().sendMessageToPlayer("Choose the new color");
+        String color = currentPlayer.getPh().receiveMessageFromPlayer();
+        previousCard = new UnoCard(CardColor.valueOf(color.toUpperCase()), CardValue.NO_VALUE);
+        messageToAll("Chosen color is " + previousCard.getColor());
+    }
+
+    public Player getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+
 }

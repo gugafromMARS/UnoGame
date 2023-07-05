@@ -21,5 +21,7 @@ public enum SpecialCard {
         return value;
     }
 
-
+    public SpecialCardHandler getSpecialCardHandler() {
+        return specialCardHandler;
+    }
 }

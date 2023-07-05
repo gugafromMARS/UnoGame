@@ -5,7 +5,7 @@ import server.Server;
 
 public class NoValue implements SpecialCardHandler{
     @Override
-    public void execute(UnoGame game, Server.PlayerHandler player) {
-
+    public void execute(UnoGame game) {
+        game.createNewCard();
     }
 }
