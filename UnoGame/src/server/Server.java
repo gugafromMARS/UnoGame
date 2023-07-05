@@ -88,6 +88,7 @@ public class Server {
         }
         private void welcomeToClient() throws IOException {
             System.out.println("New player joined!");
+            sendMessageToPlayer("Waiting for game to start!");
         }
 
         public void sendMessageToPlayer(String message) {
