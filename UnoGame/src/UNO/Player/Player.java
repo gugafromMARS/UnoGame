@@ -41,6 +41,9 @@ public class Player { // implements Runnable
         return name;
     }
 
+    public Server.PlayerHandler getPh() {
+        return ph;
+    }
 
     public ArrayList<UnoCard> getHandCards() {
         return handCards;
