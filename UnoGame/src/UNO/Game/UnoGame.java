@@ -70,6 +70,7 @@ public class UnoGame implements Runnable{
 
         startGame();
         firstCard();
+        currentPlayer = players.get(currentPlayerId);
         while (isGameOn) {
             playRound();
         }
@@ -124,6 +125,7 @@ public class UnoGame implements Runnable{
         return cardsToPlayer;
     }
 
+    private boolean playerIsPlaying = true;
     private void playRound() {
         while (isGameOn){
                 Server.PlayerHandler ph = currentPlayer.getPh();
@@ -220,6 +222,8 @@ public class UnoGame implements Runnable{
         manageNumeric(playerCardSuggestion, player);
     }
 
+
+
     private void manageSpecial(String playerCardSuggestion, Player player) {
         UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
         validateCard(playerCard, player);
@@ -281,8 +285,10 @@ public class UnoGame implements Runnable{
     private void playerSuggestionAccepted(UnoCard playerCard, Player player){
         takeCardsFromPlayer(playerCard, player);
         playedCards.add(playerCard);
-        previousCard = playerCard;
-        messageToAll("Card in table now is : " + previousCard.getValue() + " " + previousCard.getColor());
+        if(playerCard.getValue()!=CardValue.NO_VALUE) {
+            previousCard = playerCard;
+            messageToAll("Card in table now is : " + previousCard.getValue() + " " + previousCard.getColor());
+        }
     }
 
 
