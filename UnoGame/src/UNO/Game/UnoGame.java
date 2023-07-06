@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 
 public class UnoGame implements Runnable{
@@ -25,7 +26,7 @@ public class UnoGame implements Runnable{
     private List<Player> players;
     private List<UnoCard> playedCards;
     private Random random;
-    private  boolean isGameOn;
+    private boolean isGameOn;
 
     public UnoGame(List<Server.PlayerHandler> playerHandlers) {
         this.playerHandlers = playerHandlers;
@@ -66,15 +67,22 @@ public class UnoGame implements Runnable{
 
     @Override
     public void run() {
-        players = playerHandlers.stream().map(ph -> new Player(ph)).toList();
+        players = playerHandlers.stream().map(ph -> new Player(ph)).collect(Collectors.toList()); 
 
         startGame();
         firstCard();
         currentPlayer = players.get(currentPlayerId);
         while (isGameOn) {
             playRound();
+            checkDeck();
         }
 //        finishGame();
+    }
+
+    private void checkDeck(){
+        if(deck.getDeck().size() <= 1){
+            this.deck = new UnoDeck(playedCards);
+        }
     }
 
     private void startGame() {
@@ -119,7 +127,7 @@ public class UnoGame implements Runnable{
     private ArrayList<UnoCard> initialCards() {
         ArrayList<UnoCard> cardsToPlayer = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            int randomNum = random.nextInt(0, getDeck().size());
+            int randomNum = random.nextInt( (getDeck().size() - 0) + 1) + 0;
             cardsToPlayer.add(getDeck().remove(randomNum));
         }
         return cardsToPlayer;
@@ -143,7 +151,8 @@ public class UnoGame implements Runnable{
 
      private void drawCard(Player p){
 
-        UnoCard c = deck.getDeck().get(random.nextInt(0, deck.getDeck().size()));
+        UnoCard c = deck.getDeck().get(random.nextInt( (getDeck().size() - 0) + 1) + 0);
+        checkDeck();
         deck.getDeck().remove(c);
         p.getHandCards().add(c);
         //infoPlayerCards(p);
@@ -153,12 +162,13 @@ public class UnoGame implements Runnable{
 
     public void drawNcards(int n, Player p){
         for(int i=0;i<n;i++){
+            checkDeck();
             drawCard(p);
         }
     }
 
     private void playerMenu(Player p) {
-        p.getPh().sendMessageToPlayer("You will play a card [insert your selected card] or your alternative options is: /draw ");
+        p.getPh().sendMessageToPlayer("You will play a card [insert your selected card directly] or your alternative options are: \n - Draw a card from deck using the command /draw \n - Play multiple cards using the command /multiple \n - Say UNO adding the command /UNO \n - Say UNO UNO adding the command /UNO_UNO if you are playing your last card");
 
         String option = p.getPh().receiveMessageFromPlayer();
         switch (option.trim()){
@@ -166,7 +176,11 @@ public class UnoGame implements Runnable{
                 drawCard(p);
                 break;
             case "/multiple":
-//                playerIsPlaying = false;
+                p.getPh().sendMessageToPlayer("How much cards do you want to play in this turn? ");
+                String nCards = p.getPh().receiveMessageFromPlayer();
+                int cardsToPlay = Integer.parseInt(nCards);
+                playMultipleCards(cardsToPlay, p);
+                playerIsPlaying = false;
             default:
                 dealWithCard(option, currentPlayer);
                 playerIsPlaying = false;
@@ -174,6 +188,15 @@ public class UnoGame implements Runnable{
         }
 
 
+    }
+
+    private void playMultipleCards(int cardsToPlay, Player p){
+        int i = 1;
+        while(cardsToPlay != 0){
+            p.getPh().sendMessageToPlayer("Insert your ", i, "card: ");
+            String playCard = p.getPh().receiveMessageFromPlayer();
+            dealWithCard(playCard.trim(), currentPlayer);
+        }
     }
 
     private void roundMessages(Server.PlayerHandler ph){
@@ -199,7 +222,7 @@ public class UnoGame implements Runnable{
 
     private void firstCard(){
         // nao deve a primeira carta random ser uma especial para nao prejudicar o primeiro player comparativamente aos restantes
-        int num = random.nextInt(0, getDeck().size());
+        int num = random.nextInt( (getDeck().size() - 0) + 1) + 0;
         UnoCard card = getDeck().get(num);
         if(card.getColor() == CardColor.WILD
                 || card.getValue() == CardValue.PLUS_FOUR
