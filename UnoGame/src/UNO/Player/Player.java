@@ -16,6 +16,8 @@ import server.Server;
 public class Player { // implements Runnable
 
     private String name;
+    private boolean uno = false;
+    private boolean uno_uno = false;
     private ArrayList<UnoCard> handCards;
     private Server.PlayerHandler ph;
 

@@ -6,10 +6,18 @@ import java.util.Random;
 public class UnoDeck {
 
     public List<UnoCard> deck;
+    
     public UnoDeck() {
         deck = new ArrayList<>();
         generateDeck();
     }
+
+    public UnoDeck(List<UnoCard> playedCards) {
+
+        deck = (ArrayList)playedCards;
+    }
+
+
     public void generateDeck(){
         //generate normal cards
         for(CardValue value:CardValue.values()){
@@ -34,7 +42,7 @@ public class UnoDeck {
     }
 
     public UnoCard drawCard(){
-        UnoCard card = deck.get(new Random().nextInt(0, deck.size()));
+        UnoCard card = deck.get(new Random().nextInt( (getDeck().size() - 0) + 1) + 0);
         deck.remove(card);
         return card;
     }

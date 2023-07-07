@@ -95,6 +95,10 @@ public class Server {
             out.println(message);
         }
 
+        public void sendMessageToPlayer(String message_part1, int i, String message_part2) {
+            out.println(message_part1 + i + message_part2);
+        }
+
         private void handleClient() {
             if(this.socket.isClosed()){
                 return;
