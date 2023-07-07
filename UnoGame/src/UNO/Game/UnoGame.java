@@ -94,6 +94,7 @@ public class UnoGame implements Runnable{
     private void greetingPlayers(){
         messageToAll("Welcome to Uno!");
     }
+
     private void createUsername(){
         for(Server.PlayerHandler ph : playerHandlers) {
             String user = ph.insertUsername();
@@ -133,6 +134,7 @@ public class UnoGame implements Runnable{
     }
 
     private boolean playerIsPlaying = true;
+
     private void playRound() {
         while (isGameOn){
                 Server.PlayerHandler ph = currentPlayer.getPh();
@@ -189,8 +191,6 @@ public class UnoGame implements Runnable{
                 playerIsPlaying = false;
                 break;
         }
-
-
     }
 
     private void playMultipleCards(int cardsToPlay, Player p){
@@ -245,6 +245,7 @@ public class UnoGame implements Runnable{
         }
 
     }
+
     private void dealWithCard(String playerCardSuggestion, Player player){
 //        if(playerCardSuggestion.contains("/special")){
 //            manageSpecial(playerCardSuggestion, player);
@@ -260,8 +261,6 @@ public class UnoGame implements Runnable{
 
 
     }
-
-
 
 //    private void manageSpecial(String playerCardSuggestion, Player player) {
 //        UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
@@ -381,10 +380,10 @@ public class UnoGame implements Runnable{
         }
     }
 
-
     private void takeCardsFromPlayer(UnoCard card, Player player){
         player.getHandCards().remove(card);
     }
+
     private void managePlayedCards(UnoCard card) {
         playedCards.add(card);
     }
@@ -408,6 +407,7 @@ public class UnoGame implements Runnable{
         }
         currentPlayer = players.get(currentPlayerId);
     }
+
     public void previousPlayer(){
         if(gameDirection){
             currentPlayerId--;
@@ -436,6 +436,7 @@ public class UnoGame implements Runnable{
     public UnoCard getPreviousCard() {
         return previousCard;
     }
+
     public void createNewCard(){
         currentPlayer.getPh().sendMessageToPlayer("Choose the new color");
         String color = currentPlayer.getPh().receiveMessageFromPlayer();
