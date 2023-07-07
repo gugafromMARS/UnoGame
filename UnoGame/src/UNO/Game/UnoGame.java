@@ -5,6 +5,7 @@ import UNO.Player.Player;
 import UNO.UnoCard;
 import UNO.UnoDeck;
 import UNO.specialcards.SpecialCard;
+import UNO.specialcards.SpecialCardHandler;
 import UNO.specialcards.Switch;
 import messages.Messages;
 import server.Server;
@@ -182,6 +183,7 @@ public class UnoGame implements Runnable{
 //                playMultipleCards(cardsToPlay, p);
                 getMultipleCardsFromPlayer(nCards, p);
                 playerIsPlaying = false;
+                break;
             default:
                 dealWithCard(option, currentPlayer);
                 playerIsPlaying = false;
@@ -235,10 +237,13 @@ public class UnoGame implements Runnable{
 
             firstCard();
         }
-        getDeck().remove(card);
-        previousCard = card;
-        managePlayedCards(card);
-        messageToAll("Uno starts with " + card.getValue() + " " + card.getColor());
+        else{
+          getDeck().remove(card);
+          previousCard = card;
+          managePlayedCards(card);
+          messageToAll("Uno starts with " + card.getValue() + " " + card.getColor());
+        }
+
     }
     private void dealWithCard(String playerCardSuggestion, Player player){
 //        if(playerCardSuggestion.contains("/special")){
@@ -350,7 +355,7 @@ public class UnoGame implements Runnable{
 
     }
 
-    private void validateCard(UnoCard playerCard, Player player) {
+    private void validateCard(UnoCard playerCard, Player player)  {
         if(playerCard.getColor().toString().toLowerCase().equals(previousCard.getColor().toString().toLowerCase())
                 || playerCard.getValue().toString().toLowerCase().equals(previousCard.getValue().toString().toLowerCase())
                 || playerCard.getValue() == CardValue.NO_VALUE
