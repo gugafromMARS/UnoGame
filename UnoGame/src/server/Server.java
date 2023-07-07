@@ -73,12 +73,11 @@ public class Server {
             try {
                 initializeBuffers();
                 welcomeToClient();
-//                handleClient();
                while (isRunning) {
 
                }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+
             }
         }
         private void initializeBuffers() throws IOException {
@@ -99,20 +98,9 @@ public class Server {
             out.println(message_part1 + i + message_part2);
         }
 
-        private void handleClient() {
-            if(this.socket.isClosed()){
-                return;
-            }
-            // Melhorar isto, ... nao pode estar neste loop, poorque nem sempre e ele a jogar
-            sendMessageToPlayer("It's your turn");
-            receiveMessageFromPlayer();
-            handleClient();
-        }
-
         public String receiveMessageFromPlayer(){
             String message = null;
             try {
-                // ver esta parte.
                  message = in.readLine();
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -139,8 +127,9 @@ public class Server {
             this.username = username;
         }
 
-        public void clientDisconnect(){
+        public void clientDisconnect() throws IOException {
             isRunning = false;
+            this.socket.close();
         }
 
     }
