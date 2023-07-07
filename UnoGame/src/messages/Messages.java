@@ -1,7 +1,7 @@
 package messages;
 
 public class Messages {
-
+    public static final String WELCOME = "WELCOME TO UNO!";
     public static final String YOUR_TURN = " IT'S YOUR TURN!";
     public static final String WAIT_TURN = " IS PLAYING, WAIT ...";
     public static final String MENU_OPTIONS = "YOU WILL PLAY A CARD [INSERT YOUR CARD DIRECTLY] OR YOUR ALTERNATIVE OPTIONS ARE: \n DRAW A CARD FROM DECK USING THE COMMAND /draw \n - PLAY MULTIPLE CARDS USING THE COMMAND /multiple \n - SAY UNO ADDING THE COMMAND /UNO \n - SAY UNO UNO ADDING THE COMMAND /UNO_UNO IF YOU ARE PLAYING YOUR LAST CARD";

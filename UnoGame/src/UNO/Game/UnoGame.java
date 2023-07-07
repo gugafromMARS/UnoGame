@@ -5,10 +5,12 @@ import UNO.Player.Player;
 import UNO.UnoCard;
 import UNO.UnoDeck;
 import UNO.specialcards.SpecialCard;
+import UNO.Exception.*;
 import messages.Messages;
 import server.Server;
 
 import java.io.IOException;
+
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -123,7 +125,7 @@ public class UnoGame implements Runnable{
 
 
     private void greetingPlayers(){
-        messageToAll("Welcome to Uno!");
+        messageToAll(Messages.WELCOME);
     }
 
     private void createUsername(){
@@ -460,7 +462,7 @@ public class UnoGame implements Runnable{
     }
 
     public void createNewCard(){
-        currentPlayer.getPh().sendMessageToPlayer("Choose the new color");
+        currentPlayer.getPh().sendMessageToPlayer(Messages.CHOOSE_COLOR);
         String color = currentPlayer.getPh().receiveMessageFromPlayer();
         previousCard = new UnoCard(CardColor.valueOf(color.toUpperCase()), CardValue.NO_VALUE);
         messageToAll("Chosen color is " + previousCard.getColor());
