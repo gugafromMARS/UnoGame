@@ -24,7 +24,6 @@ public class Client {
         communicateWithServer();
     }
 
-
     private void connectServer() {
         String hostName = "localhost";
         int port = 1010;
@@ -53,7 +52,6 @@ public class Client {
             System.out.println("maybe server is dead");
             handleServer();
         }
-
     }
 
     private void sendMessage() throws IOException {

@@ -14,7 +14,8 @@ public class UnoDeck {
 
     public UnoDeck(List<UnoCard> playedCards) {
 
-        deck = (ArrayList)playedCards;
+        deck = new ArrayList<>(playedCards);
+        //deck = (ArrayList)playedCards;
     }
 
 
