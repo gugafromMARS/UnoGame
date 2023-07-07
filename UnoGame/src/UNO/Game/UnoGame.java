@@ -90,7 +90,7 @@ public class UnoGame implements Runnable{
 
     private void checkDeck(){
         if(playedCards.size() == 0){
-            messageToAll("Played cards is empty, play with your cards!");
+            messageToAll(Messages.PLAYED_CARDS_IS_EMPTY);
             canDraw = false;
             return;
         }
@@ -211,7 +211,7 @@ public class UnoGame implements Runnable{
                 playerMenu(p);
                 break;
             case "/multiple":
-                p.getPh().sendMessageToPlayer("Write your cards, between comas!");
+                p.getPh().sendMessageToPlayer(Messages.MULTIPLE_CARDS_RULE);
                 String[] nCards = p.getPh().receiveMessageFromPlayer().split(",");
                 getMultipleCardsFromPlayer(nCards, p);
                 playerIsPlaying = false;
@@ -276,14 +276,16 @@ public class UnoGame implements Runnable{
 
     private void manageCard(String playerCardSuggestion, Player player) {
             UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
-            if(playerCard != null){
-                validateCard(playerCard, player);
-                executeSpecialCard(playerCard);
+            try {
+                checkPlayerHaveCard(playerCard);
+                if(validateCard(playerCard, player)) {
+                    executeSpecialCard(playerCard);
+                }
                 canDraw = true;
-                return;
+            } catch (DontHaveCardException e) {
+                player.getPh().sendMessageToPlayer(e.getMessage());
+                dealWithCard(player.getPh().receiveMessageFromPlayer(), player);
             }
-            player.getPh().sendMessageToPlayer("You dont have this card, Try again...");
-            dealWithCard(player.getPh().receiveMessageFromPlayer(), player);
     }
 
     private void checkPlayerHaveCard(UnoCard card) throws DontHaveCardException {
@@ -379,6 +381,14 @@ public class UnoGame implements Runnable{
             dealWithInvalidCard(player.getPh().receiveMessageFromPlayer(), player);
         }
         return false;
+    }
+    private void dealWithInvalidCard(String playerCardSuggestion, Player player){
+        if(playerCardSuggestion.contains("/draw")) {
+            drawCard(player);
+            playerMenu(player);
+            return;
+        }
+        dealWithCard(playerCardSuggestion, player);
     }
 
     private void playerSuggestionAccepted(UnoCard playerCard, Player player){
