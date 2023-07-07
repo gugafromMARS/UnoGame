@@ -11,10 +11,8 @@ import server.Server;
 
 import java.awt.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 
@@ -127,7 +125,7 @@ public class UnoGame implements Runnable{
     private ArrayList<UnoCard> initialCards() {
         ArrayList<UnoCard> cardsToPlayer = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            int randomNum = random.nextInt( (getDeck().size() - 0) + 1) + 0;
+            int randomNum = random.nextInt(getDeck().size());
             cardsToPlayer.add(getDeck().remove(randomNum));
         }
         return cardsToPlayer;
@@ -141,6 +139,7 @@ public class UnoGame implements Runnable{
                 infoPlayerCards(currentPlayer);
 
                 while (playerIsPlaying){
+                    ph.sendMessageToPlayer(Messages.MENU_OPTIONS);
                     playerMenu(currentPlayer);
                 }
                 playerIsPlaying = true;
@@ -151,7 +150,7 @@ public class UnoGame implements Runnable{
 
      private void drawCard(Player p){
 
-        UnoCard c = deck.getDeck().get(random.nextInt( (getDeck().size() - 0) + 1) + 0);
+        UnoCard c = deck.getDeck().get(random.nextInt(getDeck().size()));
         checkDeck();
         deck.getDeck().remove(c);
         p.getHandCards().add(c);
@@ -168,18 +167,20 @@ public class UnoGame implements Runnable{
     }
 
     private void playerMenu(Player p) {
-        p.getPh().sendMessageToPlayer("You will play a card [insert your selected card directly] or your alternative options are: \n - Draw a card from deck using the command /draw \n - Play multiple cards using the command /multiple \n - Say UNO adding the command /UNO \n - Say UNO UNO adding the command /UNO_UNO if you are playing your last card");
-
         String option = p.getPh().receiveMessageFromPlayer();
         switch (option.trim()){
             case "/draw":
                 drawCard(p);
+                playerMenu(p);
                 break;
             case "/multiple":
-                p.getPh().sendMessageToPlayer("How much cards do you want to play in this turn? ");
-                String nCards = p.getPh().receiveMessageFromPlayer();
-                int cardsToPlay = Integer.parseInt(nCards);
-                playMultipleCards(cardsToPlay, p);
+//                p.getPh().sendMessageToPlayer("How much cards do you want to play in this turn? ");
+//                String nCards = p.getPh().receiveMessageFromPlayer();
+                p.getPh().sendMessageToPlayer("Write your cards, between comas!");
+                String[] nCards = p.getPh().receiveMessageFromPlayer().split(" , ");
+//                int cardsToPlay = nCards.length;
+//                playMultipleCards(cardsToPlay, p);
+                getMultipleCardsFromPlayer(nCards, p);
                 playerIsPlaying = false;
             default:
                 dealWithCard(option, currentPlayer);
@@ -191,11 +192,13 @@ public class UnoGame implements Runnable{
     }
 
     private void playMultipleCards(int cardsToPlay, Player p){
-        int i = 1;
+        int cardNum = 1;
         while(cardsToPlay != 0){
-            p.getPh().sendMessageToPlayer("Insert your ", i, "card: ");
+            p.getPh().sendMessageToPlayer("Insert your ", cardNum, " card: ");
             String playCard = p.getPh().receiveMessageFromPlayer();
             dealWithCard(playCard.trim(), currentPlayer);
+            cardNum++;
+            cardsToPlay--;
         }
     }
 
@@ -222,13 +225,13 @@ public class UnoGame implements Runnable{
 
     private void firstCard(){
         // nao deve a primeira carta random ser uma especial para nao prejudicar o primeiro player comparativamente aos restantes
-        int num = random.nextInt( (getDeck().size() - 0) + 1) + 0;
+        int num = random.nextInt(getDeck().size());
         UnoCard card = getDeck().get(num);
-        if(card.getColor() == CardColor.WILD
-                || card.getValue() == CardValue.PLUS_FOUR
-                || card.getValue() == CardValue.PLUS_TWO
-                || card.getValue() == CardValue.SKIP
-                || card.getValue() == CardValue.SWITCH) {
+        if(card.getColor().equals(CardColor.WILD)
+                || card.getValue().equals(CardValue.PLUS_FOUR)
+                || card.getValue().equals(CardValue.PLUS_TWO)
+                || card.getValue().equals(CardValue.SKIP)
+                || card.getValue().equals(CardValue.SWITCH)) {
 
             firstCard();
         }
@@ -238,24 +241,60 @@ public class UnoGame implements Runnable{
         messageToAll("Uno starts with " + card.getValue() + " " + card.getColor());
     }
     private void dealWithCard(String playerCardSuggestion, Player player){
-        if(playerCardSuggestion.contains("/special")){
-            manageSpecial(playerCardSuggestion, player);
+//        if(playerCardSuggestion.contains("/special")){
+//            manageSpecial(playerCardSuggestion, player);
+//            return;
+//        }
+        if(validateCardFormat(playerCardSuggestion, player)){
+            manageCard(playerCardSuggestion, player);
             return;
         }
-        manageNumeric(playerCardSuggestion, player);
+
+        player.getPh().sendMessageToPlayer("The card is not valid !! Try again...");
+        playerMenu(player);
+
+
     }
 
 
 
-    private void manageSpecial(String playerCardSuggestion, Player player) {
-        UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
-        validateCard(playerCard, player);
-        executeSpecialCard(playerCard);
+//    private void manageSpecial(String playerCardSuggestion, Player player) {
+//        UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
+//        validateCard(playerCard, player);
+//        executeSpecialCard(playerCard);
+//    }
+
+    private void manageCard(String playerCardSuggestion, Player player) {
+            UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
+            validateCard(playerCard, player);
+            executeSpecialCard(playerCard);
     }
 
-    private void manageNumeric(String playerCardSuggestion, Player player) {
-        UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
-        validateCard(playerCard, player);
+    private boolean validateCardFormat(String playerCardSuggestion, Player p){
+        boolean valueValid = false;
+        boolean colorValid = false;
+        boolean cardValid = false;
+        for(CardValue c : CardValue.values()){
+            if(playerCardSuggestion.contains(c.toString().toLowerCase())){
+                valueValid = true;
+            }
+        }
+        for(CardColor c : CardColor.values()){
+            if(playerCardSuggestion.contains(c.toString().toLowerCase())){
+                colorValid = true;
+            }
+        }
+        if(valueValid && colorValid){
+            cardValid = true;
+        }
+        return cardValid;
+
+//        if(!cardValid){
+//            p.getPh().sendMessageToPlayer("The card is not valid !! Try again...");
+//
+//            getCardFromPlayer(p.getPh().receiveMessageFromPlayer(), p);
+//            validateCardFormat();
+//        }
     }
 
     private UnoCard getCardFromPlayer(String playerCardSuggestion, Player player) {
@@ -266,6 +305,24 @@ public class UnoGame implements Runnable{
             }
         }
         return null;
+    }
+
+    private void getMultipleCardsFromPlayer(String[] cards, Player player) {
+
+        for (String c : cards) {
+            UnoCard card = getCardFromPlayer(c, player);
+            validateMultipleCards(card, player);
+            if (c.contains("/special")){
+                executeSpecialCard(card);
+            }
+        }
+
+    }
+
+    private void validateMultipleCards(UnoCard card, Player player){
+        if(card.getValue() == previousCard.getValue()) {
+            playerSuggestionAccepted(card, player);
+        }
     }
 
     private void executeSpecialCard(UnoCard card){
@@ -302,6 +359,11 @@ public class UnoGame implements Runnable{
             return;
         }
         messageToPlayer("CAN'T PLAY THAT CARD, TRY ANOTHER ONE!!!", player.getPh());
+        if(player.getPh().receiveMessageFromPlayer().contains("/draw")) {
+            drawCard(player);
+            playerMenu(player);
+            return;
+        }
         dealWithCard(player.getPh().receiveMessageFromPlayer(), player);
     }
 
