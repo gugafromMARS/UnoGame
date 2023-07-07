@@ -1,4 +1,4 @@
-package Exception;
+package UNO.Exception;
 
 public class PlayerDisconectedException extends Exception{
 

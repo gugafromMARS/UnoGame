@@ -83,7 +83,7 @@ public class UnoGame implements Runnable{
                 p.getPh().clientDisconnect();
                 broadcast(p.getPh().getUsername() + " disconnected.", p.getPh());
             } catch (IOException e) {
-                System.out.println("Something went wrong in the finish game...");;
+                System.out.println(Messages.FINISH_GAME_WRONG);;
             }
         }
     }
@@ -98,7 +98,7 @@ public class UnoGame implements Runnable{
             Collections.shuffle(playedCards);
             this.deck = new UnoDeck(playedCards);
             playedCards = new ArrayList<>();
-            messageToAll("New deck on the table !!");
+            messageToAll(Messages.NEW_DECK);
         }
     }
 
@@ -130,7 +130,7 @@ public class UnoGame implements Runnable{
         for(Server.PlayerHandler ph : playerHandlers) {
             String user = ph.insertUsername();
             while(!UsernameIsValid(user, ph)){
-                messageToPlayer("Username already exists!", ph);
+                messageToPlayer(Messages.User_ALREADY_EXISTS, ph);
                 user = ph.insertUsername();
             }
             ph.setUsername(user);
@@ -270,7 +270,7 @@ public class UnoGame implements Runnable{
             manageCard(playerCardSuggestion, player);
             return;
         }
-        player.getPh().sendMessageToPlayer("The card is not valid !! Try again...");
+        player.getPh().sendMessageToPlayer(Messages.CARD_NOT_VALID);
         playerMenu(player);
     }
 
@@ -284,6 +284,12 @@ public class UnoGame implements Runnable{
             }
             player.getPh().sendMessageToPlayer("You dont have this card, Try again...");
             dealWithCard(player.getPh().receiveMessageFromPlayer(), player);
+    }
+
+    private void checkPlayerHaveCard(UnoCard card) throws DontHaveCardException {
+         if(card == null){
+             throw new DontHaveCardException();
+         }
     }
 
     private boolean validateCardFormat(String playerCardSuggestion, Player p){
@@ -354,24 +360,25 @@ public class UnoGame implements Runnable{
         }
     }
 
-    private void validateCard(UnoCard playerCard, Player player)  {
-         if(playerCard == null) {
-             return;
-         }
-        if(playerCard.getColor().toString().toLowerCase().equals(previousCard.getColor().toString().toLowerCase())
-                || playerCard.getValue().toString().toLowerCase().equals(previousCard.getValue().toString().toLowerCase())
-                || playerCard.getValue() == CardValue.NO_VALUE
-                || playerCard.getValue() == CardValue.PLUS_FOUR) {
-            playerSuggestionAccepted(playerCard, player);
-            return;
+    private boolean validateCard(UnoCard playerCard, Player player)  {
+        try {
+            checkPlayerHaveCard(playerCard);
+            if(playerCard.getColor().toString().toLowerCase().equals(previousCard.getColor().toString().toLowerCase())
+                    || playerCard.getValue().toString().toLowerCase().equals(previousCard.getValue().toString().toLowerCase())
+                    || playerCard.getValue() == CardValue.NO_VALUE
+                    || playerCard.getValue() == CardValue.PLUS_FOUR) {
+                playerSuggestionAccepted(playerCard, player);
+                return true;
+            }
+            throw new CantPlayCardException();
+        } catch (DontHaveCardException e) {
+            player.getPh().sendMessageToPlayer(e.getMessage());
+            dealWithCard(player.getPh().receiveMessageFromPlayer(), player);
+        } catch (CantPlayCardException e) {
+            messageToPlayer(e.getMessage(), player.getPh());
+            dealWithInvalidCard(player.getPh().receiveMessageFromPlayer(), player);
         }
-        messageToPlayer("CAN'T PLAY THAT CARD, TRY ANOTHER ONE!!!", player.getPh());
-        if(player.getPh().receiveMessageFromPlayer().contains("/draw")) {
-            drawCard(player);
-            playerMenu(player);
-            return;
-        }
-        dealWithCard(player.getPh().receiveMessageFromPlayer(), player);
+        return false;
     }
 
     private void playerSuggestionAccepted(UnoCard playerCard, Player player){
