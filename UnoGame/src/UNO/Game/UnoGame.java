@@ -6,6 +6,7 @@ import UNO.UnoCard;
 import UNO.UnoDeck;
 import UNO.specialcards.SpecialCard;
 import UNO.Exception.*;
+import UNO.userhandler.UserHandler;
 import messages.Messages;
 import server.Server;
 
@@ -23,6 +24,7 @@ public class UnoGame implements Runnable{
     private List<Server.PlayerHandler> playerHandlers;
     private List<Player> players;
     private List<UnoCard> playedCards;
+    private UserHandler userHandler;
     private Random random;
     private boolean isGameOn;
     private final int numOfPlayers = 3;
@@ -35,6 +37,7 @@ public class UnoGame implements Runnable{
         isGameOn = true;
         playedCards = new ArrayList<>();
         previousCard = null;
+        userHandler = new UserHandler(playerHandlers);
     }
 
     public List<Server.PlayerHandler> getPlayerHandlers() {
@@ -123,32 +126,14 @@ public class UnoGame implements Runnable{
         }
     }
 
-
     private void greetingPlayers(){
         messageToAll(Messages.WELCOME);
     }
 
     private void createUsername(){
-        for(Server.PlayerHandler ph : playerHandlers) {
-            String user = ph.insertUsername();
-            while(!UsernameIsValid(user, ph)){
-                messageToPlayer(Messages.User_ALREADY_EXISTS, ph);
-                user = ph.insertUsername();
-            }
-            ph.setUsername(user);
-        }
+        userHandler.createUser();
     }
 
-    private boolean UsernameIsValid(String name, Server.PlayerHandler ph){
-        for(Server.PlayerHandler pHandler : playerHandlers) {
-            if (pHandler.getUsername() != null) {
-                if ((pHandler.getUsername().equals(name))) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
 
     private void giveCardsToPlayer() {
         ArrayList<UnoCard> iCards;
