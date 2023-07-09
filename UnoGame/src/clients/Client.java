@@ -1,9 +1,11 @@
 package clients;
 
+import server.Server;
+
 import java.io.*;
 import java.net.Socket;
 
-public class Client {
+public class Client extends Server {
 
     private Socket socket;
     private BufferedReader in;

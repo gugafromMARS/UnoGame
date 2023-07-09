@@ -45,7 +45,7 @@ public class CardHandler {
             UnoCard c = deck.getDeck().get(random.nextInt(deck.getDeck().size()));
             deck.getDeck().remove(c);
             p.getHandCards().add(c);
-            p.getPh().sendMessageToPlayer("You got a " + c.getValue() + " / " + c.getColor());
+            p.getPh().sendMessageToPlayer("You got a " + c.getColor().getColorCode() + c.getValue() + " / " + c.getColor() +"\u001b[0;1m");
             deckHandler.checkDeck();
         }
     }
@@ -61,14 +61,14 @@ public class CardHandler {
     public void infoPlayerCards(Player player) {
         ArrayList<UnoCard> playerHandCards = player.getHandCards();
         StringBuilder sb = new StringBuilder();
-        sb.append("Your cards are :");
+        sb.append("\u001b[0;1m" + "Your cards are :");
         sb.append(" ");
 
         for(UnoCard card : playerHandCards){
-            sb.append(card.getValue());
+            sb.append(card.getColor().getColorCode() + card.getValue());
             sb.append(" / ");
             sb.append(card.getColor());
-            sb.append(" || ");
+            sb.append("\u001b[0;1m" + " || ");
         }
         String cardsInfo = sb.toString();
         messagesHandler.messageToPlayer(cardsInfo, player.getPh());
@@ -89,7 +89,7 @@ public class CardHandler {
             deck.getDeck().remove(card);
             previousCard = card;
             managePlayedCards(card);
-            messagesHandler.messageToAll("Uno starts with " + card.getValue() + " " + card.getColor());
+            messagesHandler.messageToAll("\u001b[0;1m" + "Uno starts with " + card.getColor().getColorCode() + card.getValue() + " " + card.getColor());
         }
 
     }
@@ -228,7 +228,9 @@ public class CardHandler {
         playedCards.add(playerCard);
         if(playerCard.getValue()!=CardValue.NO_VALUE) {
             previousCard = playerCard;
-            messagesHandler.messageToAll("Card in table now is : " + previousCard.getValue() + " " + previousCard.getColor());
+            messagesHandler.messageToAll("\u001b[0;1m" + "Card in table now is : "
+                    + previousCard.getColor().getColorCode() + previousCard.getValue()
+                    + " " + previousCard.getColor() + "\u001b[0;1m");
         }
     }
     private void takeCardsFromPlayer(UnoCard card, Player player){
@@ -239,7 +241,7 @@ public class CardHandler {
         currentPlayer.getPh().sendMessageToPlayer(Messages.CHOOSE_COLOR);
         String color = currentPlayer.getPh().receiveMessageFromPlayer();
         previousCard = new UnoCard(CardColor.valueOf(color.toUpperCase()), CardValue.NO_VALUE);
-        messagesHandler.messageToAll("Chosen card is " + previousCard.getValue() + " and the color is " + previousCard.getColor());
+        messagesHandler.messageToAll("\u001b[0;1m" + "Chosen card is " + previousCard.getValue() + " and the color is " + previousCard.getColor().getColorCode() + previousCard.getColor());
     }
 
     public boolean isCanDraw() {
