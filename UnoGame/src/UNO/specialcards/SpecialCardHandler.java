@@ -1,9 +1,9 @@
 package UNO.specialcards;
 
-import UNO.Game.UnoGame;
-import server.Server;
+import UNO.handlers.CardHandler;
+import UNO.handlers.NextAndPreviousPlayerHandler;
 
 public interface SpecialCardHandler{
 
-    void execute(UnoGame game);
+    void execute(CardHandler cardHandler, NextAndPreviousPlayerHandler nextAndPreviousPlayerHandler);
 }

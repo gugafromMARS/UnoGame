@@ -1,4 +1,4 @@
-package UNO.userhandler;
+package UNO.handlers;
 
 import messages.Messages;
 import server.Server;

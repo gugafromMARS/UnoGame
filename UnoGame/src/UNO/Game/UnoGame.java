@@ -1,12 +1,8 @@
 package UNO.Game;
-import UNO.CardColor;
-import UNO.CardValue;
 import UNO.Player.Player;
 import UNO.UnoCard;
 import UNO.UnoDeck;
-import UNO.specialcards.SpecialCard;
-import UNO.Exception.*;
-import UNO.userhandler.UserHandler;
+import UNO.handlers.*;
 import messages.Messages;
 import server.Server;
 
@@ -20,15 +16,17 @@ import java.util.stream.Collectors;
 public class UnoGame implements Runnable{
 
     private UnoDeck deck;
-    private UnoCard previousCard;
     private List<Server.PlayerHandler> playerHandlers;
     private List<Player> players;
     private List<UnoCard> playedCards;
     private UserHandler userHandler;
+    private DeckHandler deckHandler;
+    private MessagesHandler messagesHandler;
+    private NextAndPreviousPlayerHandler nextAndPreviousPlayerHandler;
+    private MenuHandler menuHandler;
     private Random random;
     private boolean isGameOn;
-    private final int numOfPlayers = 3;
-    private final int numOfInitialCards = 24;
+    private final int numOfInitialCards = 2;
 
     public UnoGame(List<Server.PlayerHandler> playerHandlers) {
         this.playerHandlers = playerHandlers;
@@ -36,77 +34,46 @@ public class UnoGame implements Runnable{
         random = new Random();
         isGameOn = true;
         playedCards = new ArrayList<>();
-        previousCard = null;
-        userHandler = new UserHandler(playerHandlers);
-    }
-
-    public List<Server.PlayerHandler> getPlayerHandlers() {
-        return playerHandlers;
-    }
-
-    public boolean isReady(){
-        return players.size() > numOfPlayers;
     }
 
     private List<UnoCard> getDeck() {
         return deck.getDeck();
     }
 
-    private void messageToAll(String message){
-        playerHandlers.forEach(pH -> pH.sendMessageToPlayer(message));
-    }
-
-    private void broadcast(String message, Server.PlayerHandler ph){
-        playerHandlers.stream()
-                .filter(pHandler -> !pHandler.equals(ph))
-                .forEach(pHandler -> pHandler.sendMessageToPlayer(message));
-    }
-
-    private void messageToPlayer(String message, Server.PlayerHandler ph){
-        playerHandlers.stream()
-                .filter(pH -> pH.equals(ph))
-                .forEach(pH -> pH.sendMessageToPlayer(message));
-    }
-
     @Override
     public void run() {
-        players = playerHandlers.stream().map(ph -> new Player(ph)).collect(Collectors.toList()); 
+        players = playerHandlers.stream().map(ph -> new Player(ph)).collect(Collectors.toList());
+        startHandlers();
 
         startGame();
-        firstCard();
-        currentPlayer = players.get(currentPlayerId);
+        deckHandler.getCardHandler().firstCard();
+        nextAndPreviousPlayerHandler.setCurrentPlayer(players.get(nextAndPreviousPlayerHandler.getCurrentPlayerId()));
         while (isGameOn) {
             playRound();
-            checkDeck();
+            deckHandler.checkDeck();
         }
         finishGame();
+    }
+
+    private void startHandlers(){
+        userHandler = new UserHandler(playerHandlers);
+        messagesHandler = new MessagesHandler(playerHandlers);
+        nextAndPreviousPlayerHandler = new NextAndPreviousPlayerHandler(players);
+        deckHandler = new DeckHandler(deck, playedCards, players, messagesHandler, nextAndPreviousPlayerHandler);
+        menuHandler = new MenuHandler(deckHandler, nextAndPreviousPlayerHandler);
+        deckHandler.getCardHandler().setMenuHandler(menuHandler);
     }
 
     private void finishGame(){
         for(Player p : players){
             try {
                 p.getPh().clientDisconnect();
-                broadcast(p.getPh().getUsername() + " disconnected.", p.getPh());
+                messagesHandler.broadcast(p.getPh().getUsername() + " disconnected.", p.getPh());
             } catch (IOException e) {
                 System.out.println(Messages.FINISH_GAME_WRONG);;
             }
         }
     }
-
-    private void checkDeck(){
-        if(playedCards.size() == 0){
-            messageToAll(Messages.PLAYED_CARDS_IS_EMPTY);
-            canDraw = false;
-            return;
-        }
-        if(deck.getDeck().size() <= 1){
-            Collections.shuffle(playedCards);
-            this.deck = new UnoDeck(playedCards);
-            playedCards = new ArrayList<>();
-            messageToAll(Messages.NEW_DECK);
-        }
-    }
-
     private void startGame() {
         deck.generateDeck();
         greetingPlayers();
@@ -116,24 +83,23 @@ public class UnoGame implements Runnable{
 
     private void checkPlayerUno(Player p){
         if(p.getHandCards().size()==1){
-            messageToAll(p.getPh().getUsername() + " says UNO !!");
+            messagesHandler.messageToAll(p.getPh().getUsername() + " says UNO !!");
         }
     }
     private void checkPlayerWin(Player p){
         if(p.getHandCards().size()==0){
             isGameOn = false;
-            messageToAll(p.getPh().getUsername() + " WIN THE GAME !!");
+            messagesHandler.messageToAll(p.getPh().getUsername() + " WIN THE GAME !!");
         }
     }
 
     private void greetingPlayers(){
-        messageToAll(Messages.WELCOME);
+        messagesHandler.messageToAll(Messages.WELCOME);
     }
 
     private void createUsername(){
         userHandler.createUser();
     }
-
 
     private void giveCardsToPlayer() {
         ArrayList<UnoCard> iCards;
@@ -152,309 +118,26 @@ public class UnoGame implements Runnable{
         return cardsToPlayer;
     }
 
-    private boolean playerIsPlaying = true;
-
     private void playRound() {
         while (isGameOn){
-                Server.PlayerHandler ph = currentPlayer.getPh();
+                Server.PlayerHandler ph = nextAndPreviousPlayerHandler.getCurrentPlayer().getPh();
                 roundMessages(ph);
-                infoPlayerCards(currentPlayer);
+                deckHandler.getCardHandler().infoPlayerCards(nextAndPreviousPlayerHandler.getCurrentPlayer());
 
-                while (playerIsPlaying){
+                while (menuHandler.isPlayerIsPlaying()){
                     ph.sendMessageToPlayer(Messages.MENU_OPTIONS);
-                    playerMenu(currentPlayer);
+                    menuHandler.playerMenu(nextAndPreviousPlayerHandler.getCurrentPlayer());
                 }
-                checkPlayerUno(currentPlayer);
-                playerIsPlaying = true;
-                checkPlayerWin(currentPlayer);
-                nextPlayer();
-        }
-    }
-
-    private boolean canDraw = true;
-
-     private void drawCard(Player p){
-         if(canDraw) {
-             UnoCard c = deck.getDeck().get(random.nextInt(getDeck().size()));
-             deck.getDeck().remove(c);
-             p.getHandCards().add(c);
-             p.getPh().sendMessageToPlayer("You got a " + c.getValue() + " / " + c.getColor());
-             checkDeck();
-         }
-    }
-
-    public void drawNcards(int n, Player p){
-        for(int i=0;i<n;i++){
-            checkDeck();
-            drawCard(p);
-        }
-    }
-
-    private void playerMenu(Player p) {
-        String option = p.getPh().receiveMessageFromPlayer();
-        switch (option.trim()){
-            case "/draw":
-                drawCard(p);
-                playerMenu(p);
-                break;
-            case "/multiple":
-                p.getPh().sendMessageToPlayer(Messages.MULTIPLE_CARDS_RULE);
-                String[] nCards = p.getPh().receiveMessageFromPlayer().split(",");
-                getMultipleCardsFromPlayer(nCards, p);
-                playerIsPlaying = false;
-                break;
-            default:
-                dealWithCard(option, currentPlayer);
-                playerIsPlaying = false;
-                break;
+                checkPlayerUno(nextAndPreviousPlayerHandler.getCurrentPlayer());
+                menuHandler.setPlayerIsPlaying(true);
+                checkPlayerWin(nextAndPreviousPlayerHandler.getCurrentPlayer());
+                nextAndPreviousPlayerHandler.getNextPlayer();
         }
     }
 
     private void roundMessages(Server.PlayerHandler ph){
-        messageToPlayer(ph.getUsername() + Messages.YOUR_TURN, ph);
-        broadcast(ph.getUsername() + Messages.WAIT_TURN, ph);
-    }
-
-    private void infoPlayerCards(Player player) {
-        ArrayList<UnoCard> playerHandCards = player.getHandCards();
-        StringBuilder sb = new StringBuilder();
-        sb.append("Your cards are :");
-        sb.append(" ");
-
-        for(UnoCard card : playerHandCards){
-            sb.append(card.getValue());
-            sb.append(" / ");
-            sb.append(card.getColor());
-            sb.append(" || ");
-        }
-        String cardsInfo = sb.toString();
-        messageToPlayer(cardsInfo, player.getPh());
-    }
-
-    private void firstCard(){
-        // nao deve a primeira carta random ser uma especial para nao prejudicar o primeiro player comparativamente aos restantes
-        int num = random.nextInt(getDeck().size());
-        UnoCard card = getDeck().get(num);
-        if(card.getColor().equals(CardColor.WILD)
-                || card.getValue().equals(CardValue.PLUS_FOUR)
-                || card.getValue().equals(CardValue.PLUS_TWO)
-                || card.getValue().equals(CardValue.SKIP)
-                || card.getValue().equals(CardValue.SWITCH)) {
-
-            firstCard();
-        }
-        else{
-          getDeck().remove(card);
-          previousCard = card;
-          managePlayedCards(card);
-          messageToAll("Uno starts with " + card.getValue() + " " + card.getColor());
-        }
-
-    }
-
-    private void dealWithCard(String playerCardSuggestion, Player player){
-        if(validateCardFormat(playerCardSuggestion, player)){
-            manageCard(playerCardSuggestion, player);
-            return;
-        }
-        player.getPh().sendMessageToPlayer(Messages.CARD_NOT_VALID);
-        playerMenu(player);
-    }
-
-    private void manageCard(String playerCardSuggestion, Player player) {
-            UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
-            try {
-                checkPlayerHaveCard(playerCard);
-                if(validateCard(playerCard, player)) {
-                    executeSpecialCard(playerCard);
-                }
-                canDraw = true;
-            } catch (DontHaveCardException e) {
-                player.getPh().sendMessageToPlayer(e.getMessage());
-                dealWithCard(player.getPh().receiveMessageFromPlayer(), player);
-            }
-    }
-
-    private void checkPlayerHaveCard(UnoCard card) throws DontHaveCardException {
-         if(card == null){
-             throw new DontHaveCardException();
-         }
-    }
-
-    private boolean validateCardFormat(String playerCardSuggestion, Player p){
-        boolean valueValid = false;
-        boolean colorValid = false;
-        boolean cardValid = false;
-        for(CardValue c : CardValue.values()){
-            if(playerCardSuggestion.contains(c.toString().toLowerCase())){
-                valueValid = true;
-            }
-        }
-        for(CardColor c : CardColor.values()){
-            if(playerCardSuggestion.contains(c.toString().toLowerCase())){
-                colorValid = true;
-            }
-        }
-        if(valueValid && colorValid){
-            cardValid = true;
-        }
-        return cardValid;
-    }
-
-    private UnoCard getCardFromPlayer(String playerCardSuggestion, Player player) {
-        for (UnoCard c : player.getHandCards()) {
-            if (playerCardSuggestion.contains(c.getValue().toString().toLowerCase()) &&
-                    playerCardSuggestion.contains(c.getColor().toString().toLowerCase())) {
-                return c;
-            }
-        }
-        return null;
-    }
-
-    private void getMultipleCardsFromPlayer(String[] cards, Player player) {
-        for (String c : cards) {
-            UnoCard card = getCardFromPlayer(c, player);
-            validateMultipleCards(card, player);
-            executeSpecialCard(card);
-        }
-
-    }
-
-    private void validateMultipleCards(UnoCard card, Player player){
-        if(card.getValue() == previousCard.getValue()) {
-            playerSuggestionAccepted(card, player);
-        }
-    }
-
-    private void executeSpecialCard(UnoCard card){
-        if(card.getValue() == CardValue.SWITCH){
-            SpecialCard.SWITCH.getSpecialCardHandler().execute(this);
-            return;
-        }
-        if(card.getValue() == CardValue.SKIP){
-            SpecialCard.SKIP.getSpecialCardHandler().execute(this);
-            return;
-        }
-        if(card.getValue() == CardValue.PLUS_TWO){
-            SpecialCard.PLUS_TWO.getSpecialCardHandler().execute(this);
-            return;
-        }
-        if(card.getValue() == CardValue.PLUS_FOUR){
-            SpecialCard.PLUS_FOUR.getSpecialCardHandler().execute(this);
-            SpecialCard.NO_VALUE.getSpecialCardHandler().execute(this);
-            return;
-        }
-        if(card.getValue() == CardValue.NO_VALUE){
-            SpecialCard.NO_VALUE.getSpecialCardHandler().execute(this);
-        }
-    }
-
-    private boolean validateCard(UnoCard playerCard, Player player)  {
-        try {
-            checkPlayerHaveCard(playerCard);
-            if(playerCard.getColor().toString().toLowerCase().equals(previousCard.getColor().toString().toLowerCase())
-                    || playerCard.getValue().toString().toLowerCase().equals(previousCard.getValue().toString().toLowerCase())
-                    || playerCard.getValue() == CardValue.NO_VALUE
-                    || playerCard.getValue() == CardValue.PLUS_FOUR) {
-                playerSuggestionAccepted(playerCard, player);
-                return true;
-            }
-            throw new CantPlayCardException();
-        } catch (DontHaveCardException e) {
-            player.getPh().sendMessageToPlayer(e.getMessage());
-            dealWithCard(player.getPh().receiveMessageFromPlayer(), player);
-        } catch (CantPlayCardException e) {
-            messageToPlayer(e.getMessage(), player.getPh());
-            dealWithInvalidCard(player.getPh().receiveMessageFromPlayer(), player);
-        }
-        return false;
-    }
-    private void dealWithInvalidCard(String playerCardSuggestion, Player player){
-        if(playerCardSuggestion.contains("/draw")) {
-            drawCard(player);
-            playerMenu(player);
-            return;
-        }
-        dealWithCard(playerCardSuggestion, player);
-    }
-
-    private void playerSuggestionAccepted(UnoCard playerCard, Player player){
-        takeCardsFromPlayer(playerCard, player);
-        playedCards.add(playerCard);
-        if(playerCard.getValue()!=CardValue.NO_VALUE) {
-            previousCard = playerCard;
-            messageToAll("Card in table now is : " + previousCard.getValue() + " " + previousCard.getColor());
-        }
-    }
-
-    private void takeCardsFromPlayer(UnoCard card, Player player){
-        player.getHandCards().remove(card);
-    }
-
-    private void managePlayedCards(UnoCard card) {
-        playedCards.add(card);
-    }
-
-    public List<Player> getPlayers() {
-        return players;
-    }
-
-    private int currentPlayerId = 0;
-    private Player currentPlayer;
-    private boolean gameDirection = true;
-
-    private void nextPlayer(){
-        if(gameDirection){
-            currentPlayerId++;
-            currentPlayerId = (currentPlayerId == players.size()) ? 0 : currentPlayerId;
-        }
-        else {
-            currentPlayerId--;
-            currentPlayerId = (currentPlayerId ==-1) ? players.size()-1 : currentPlayerId;
-        }
-        currentPlayer = players.get(currentPlayerId);
-    }
-
-    /**
-     * this method do something
-     */
-    public void previousPlayer(){
-        if(gameDirection){
-            currentPlayerId--;
-            currentPlayerId = (currentPlayerId ==-1) ? players.size()-1 : currentPlayerId;
-        }
-        else {
-            currentPlayerId++;
-            currentPlayerId = (currentPlayerId == players.size()) ? 0 : currentPlayerId;
-        }
-        currentPlayer = players.get(currentPlayerId);
-    }
-
-    public void setGameDirection(boolean gameDirection) {
-        this.gameDirection = gameDirection;
-    }
-
-    public boolean isGameDirection() {
-        return gameDirection;
-    }
-
-    public void getNextPlayer(){
-        nextPlayer();
-    }
-
-    public UnoCard getPreviousCard() {
-        return previousCard;
-    }
-
-    public void createNewCard(){
-        currentPlayer.getPh().sendMessageToPlayer(Messages.CHOOSE_COLOR);
-        String color = currentPlayer.getPh().receiveMessageFromPlayer();
-        previousCard = new UnoCard(CardColor.valueOf(color.toUpperCase()), CardValue.NO_VALUE);
-        messageToAll("Chosen color is " + previousCard.getColor());
-    }
-
-    public Player getCurrentPlayer() {
-        return currentPlayer;
+        messagesHandler.messageToPlayer(ph.getUsername() + Messages.YOUR_TURN, ph);
+        messagesHandler.broadcast(ph.getUsername() + Messages.WAIT_TURN, ph);
     }
 
 }
