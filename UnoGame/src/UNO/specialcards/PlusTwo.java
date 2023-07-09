@@ -1,13 +1,14 @@
 package UNO.specialcards;
 
-import UNO.Game.UnoGame;
+import UNO.handlers.CardHandler;
+import UNO.handlers.NextAndPreviousPlayerHandler;
 
 
 public class PlusTwo implements SpecialCardHandler{
     @Override
-    public void execute(UnoGame game) {
-            game.getNextPlayer();
-            game.drawNcards(2, game.getCurrentPlayer());
-            game.previousPlayer();
+    public void execute(CardHandler cardHandler, NextAndPreviousPlayerHandler nextAndPreviousPlayerHandler) {
+            nextAndPreviousPlayerHandler.getNextPlayer();
+            cardHandler.drawNCards(2, nextAndPreviousPlayerHandler.getCurrentPlayer());
+            nextAndPreviousPlayerHandler.previousPlayer();
     }
 }

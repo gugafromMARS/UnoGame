@@ -1,11 +1,12 @@
 package UNO.specialcards;
 
-import UNO.Game.UnoGame;
+import UNO.handlers.CardHandler;
+import UNO.handlers.NextAndPreviousPlayerHandler;
 
 
 public class Switch implements SpecialCardHandler {
     @Override
-    public void execute(UnoGame game) {
-        game.setGameDirection(!game.isGameDirection());
+    public void execute(CardHandler cardHandler, NextAndPreviousPlayerHandler nextAndPreviousPlayerHandler) {
+        nextAndPreviousPlayerHandler.setGameDirection(!nextAndPreviousPlayerHandler.isGameDirection());
     }
 }

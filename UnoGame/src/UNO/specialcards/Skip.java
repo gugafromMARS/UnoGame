@@ -1,11 +1,11 @@
 package UNO.specialcards;
 
-import UNO.Game.UnoGame;
-import server.Server;
+import UNO.handlers.CardHandler;
+import UNO.handlers.NextAndPreviousPlayerHandler;
 
 public class Skip implements SpecialCardHandler{
     @Override
-    public void execute(UnoGame game) {
-        game.getNextPlayer();
+    public void execute(CardHandler cardHandler, NextAndPreviousPlayerHandler nextAndPreviousPlayerHandler) {
+        nextAndPreviousPlayerHandler.getNextPlayer();
     }
 }
