@@ -26,7 +26,7 @@ public class UnoGame implements Runnable{
     private MenuHandler menuHandler;
     private Random random;
     private boolean isGameOn;
-    private final int numOfInitialCards =2;
+    private final int numOfInitialCards = 2;
 
     public UnoGame(List<Server.PlayerHandler> playerHandlers) {
         this.playerHandlers = playerHandlers;

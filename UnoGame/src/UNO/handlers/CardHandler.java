@@ -234,12 +234,12 @@ public class CardHandler {
     private void takeCardsFromPlayer(UnoCard card, Player player){
         player.getHandCards().remove(card);
     }
-    public void createNewCard(){
+    public void NoValueColor(){
         Player currentPlayer = nextAndPreviousPlayerHandler.getCurrentPlayer();
         currentPlayer.getPh().sendMessageToPlayer(Messages.CHOOSE_COLOR);
         String color = currentPlayer.getPh().receiveMessageFromPlayer();
         previousCard = new UnoCard(CardColor.valueOf(color.toUpperCase()), CardValue.NO_VALUE);
-        messagesHandler.messageToAll("Chosen color is " + previousCard.getColor());
+        messagesHandler.messageToAll("Chosen card is " + previousCard.getValue() + " and the color is " + previousCard.getColor());
     }
 
     public boolean isCanDraw() {
