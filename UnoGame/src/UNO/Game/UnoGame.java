@@ -83,13 +83,13 @@ public class UnoGame implements Runnable{
 
     private void checkPlayerUno(Player p){
         if(p.getHandCards().size()==1){
-            messagesHandler.messageToAll(p.getPh().getUsername() + " says UNO !!");
+            messagesHandler.messageToAll("\u001b[0;1m" + p.getPh().getUsername() + " says UNO !!");
         }
     }
     private void checkPlayerWin(Player p){
         if(p.getHandCards().size()==0){
             isGameOn = false;
-            messagesHandler.messageToAll(p.getPh().getUsername() + " WIN THE GAME !!");
+            messagesHandler.messageToAll("\u001b[0;1m" + p.getPh().getUsername() + " WIN THE GAME !!");
         }
     }
 
@@ -125,7 +125,7 @@ public class UnoGame implements Runnable{
                 deckHandler.getCardHandler().infoPlayerCards(nextAndPreviousPlayerHandler.getCurrentPlayer());
 
                 while (menuHandler.isPlayerIsPlaying()){
-                    ph.sendMessageToPlayer(Messages.MENU_OPTIONS);
+                    ph.sendMessageToPlayer("\u001b[0;1m" + Messages.MENU_OPTIONS);
                     menuHandler.playerMenu(nextAndPreviousPlayerHandler.getCurrentPlayer());
                 }
                 checkPlayerUno(nextAndPreviousPlayerHandler.getCurrentPlayer());
@@ -136,8 +136,8 @@ public class UnoGame implements Runnable{
     }
 
     private void roundMessages(Server.PlayerHandler ph){
-        messagesHandler.messageToPlayer(ph.getUsername() + Messages.YOUR_TURN, ph);
-        messagesHandler.broadcast(ph.getUsername() + Messages.WAIT_TURN, ph);
+        messagesHandler.messageToPlayer("\u001b[0;1m" + ph.getUsername() + Messages.YOUR_TURN, ph);
+        messagesHandler.broadcast("\u001b[0;1m" + ph.getUsername() + Messages.WAIT_TURN, ph);
     }
 
 }

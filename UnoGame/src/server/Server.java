@@ -109,7 +109,7 @@ public class Server {
         }
 
         public String insertUsername() {
-            sendMessageToPlayer("Insert your username: ");
+            sendMessageToPlayer("\u001b[0;1m" + "Insert your username: ");
             String user = null;
             try {
                 user = in.readLine();
