@@ -40,6 +40,11 @@ public class CardHandler {
         menuHandler = null;
     }
 
+
+    /**
+     * current player get a random card
+     * @param p current player
+     */
     public void drawCard(Player p){
         if(canDraw) {
             UnoCard c = deck.getDeck().get(random.nextInt(deck.getDeck().size()));
@@ -50,6 +55,11 @@ public class CardHandler {
         }
     }
 
+    /**
+     * current player get a number of cards he chose
+     * @param n number of cards to draw
+     * @param p current player
+     */
 
     public void drawNCards(int n, Player p){
         for(int i=0;i<n;i++){
@@ -57,6 +67,11 @@ public class CardHandler {
             drawCard(p);
         }
     }
+
+    /**
+     * give to current player the info about his cards
+     * @param player current player
+     */
 
     public void infoPlayerCards(Player player) {
         ArrayList<UnoCard> playerHandCards = player.getHandCards();
@@ -74,6 +89,9 @@ public class CardHandler {
         messagesHandler.messageToPlayer(cardsInfo, player.getPh());
     }
 
+    /**
+     * First card generate randomly to put on the board before the game starts
+     */
     public void firstCard(){
         int num = random.nextInt(deck.getDeck().size());
         UnoCard card = deck.getDeck().get(num);
@@ -93,10 +111,20 @@ public class CardHandler {
         }
 
     }
+
+    /**
+     * save all the cards played
+     * @param card card played
+     */
     private void managePlayedCards(UnoCard card) {
         playedCards.add(card);
     }
 
+    /**
+     * Start to validate if card is correct option,
+     * @param playerCardSuggestion card chosen from player
+     * @param player current player
+     */
     public void dealWithCard(String playerCardSuggestion, Player player){
         if(validateCardFormat(playerCardSuggestion, player)){
             manageCard(playerCardSuggestion, player);
@@ -105,6 +133,12 @@ public class CardHandler {
         player.getPh().sendMessageToPlayer(Messages.CARD_NOT_VALID);
         menuHandler.playerMenu(player);
     }
+
+    /**
+     * Start for going to check if player have card he is want to play, and if his have, then card is played
+     * @param playerCardSuggestion card chosen from player
+     * @param player current player
+     */
 
     private void manageCard(String playerCardSuggestion, Player player) {
         UnoCard playerCard = getCardFromPlayer(playerCardSuggestion, player);
@@ -120,11 +154,23 @@ public class CardHandler {
         }
     }
 
+    /**
+     * check if player have card
+     * @param card card chosen from player
+     * @throws DontHaveCardException
+     */
     private void checkPlayerHaveCard(UnoCard card) throws DontHaveCardException {
         if(card == null){
             throw new DontHaveCardException();
         }
     }
+
+    /**
+     * check if card suggest from current player are correct for play
+     * @param playerCardSuggestion card chosen from player
+     * @param p current player
+     * @return true if card is a correct option
+     */
 
     private boolean validateCardFormat(String playerCardSuggestion, Player p){
         boolean valueValid = false;
@@ -146,6 +192,13 @@ public class CardHandler {
         return cardValid;
     }
 
+    /**
+     * Check the card player chosen and return it
+     * @param playerCardSuggestion card chosen from player
+     * @param player current player
+     * @return card from player hand
+     */
+
     private UnoCard getCardFromPlayer(String playerCardSuggestion, Player player) {
         for (UnoCard c : player.getHandCards()) {
             if (playerCardSuggestion.contains(c.getValue().toString().toLowerCase()) &&
@@ -156,6 +209,12 @@ public class CardHandler {
         return null;
     }
 
+    /**
+     * Going to peek multiple cards from player hand
+     * @param cards cards chosen from player
+     * @param player current player
+     */
+
     public void getMultipleCardsFromPlayer(String[] cards, Player player) {
         for (String c : cards) {
             UnoCard card = getCardFromPlayer(c, player);
@@ -165,11 +224,21 @@ public class CardHandler {
 
     }
 
+    /**
+     * Going to check card by card and see if it's a correct choice
+     * @param card card chosen from player
+     * @param player current player
+     */
     private void validateMultipleCards(UnoCard card, Player player){
         if(card.getValue() == previousCard.getValue()) {
             playerSuggestionAccepted(card, player);
         }
     }
+
+    /**
+     * if card chosen is a special card, execute his side effect.
+     * @param card card chosen from player
+     */
 
     private void executeSpecialCard(UnoCard card){
         if(card.getValue() == CardValue.SWITCH){
@@ -194,6 +263,13 @@ public class CardHandler {
         }
     }
 
+    /**
+     * Validate if card is correct comparing to the card on board.
+     * @param playerCard card chosen
+     * @param player current player
+     * @return true if card is a correct choice
+     */
+
     private boolean validateCard(UnoCard playerCard, Player player)  {
         try {
             checkPlayerHaveCard(playerCard);
@@ -214,6 +290,12 @@ public class CardHandler {
         }
         return false;
     }
+
+    /**
+     * check if player chose to draw a card
+     * @param playerCardSuggestion card chosen from player
+     * @param player current player
+     */
     private void dealWithInvalidCard(String playerCardSuggestion, Player player){
         if(playerCardSuggestion.contains("/draw")) {
             drawCard(player);
@@ -223,6 +305,11 @@ public class CardHandler {
         dealWithCard(playerCardSuggestion, player);
     }
 
+    /**
+     * Take the card from player hand and put it on the board
+     * @param playerCard card chosen from player and accept from game
+     * @param player current player
+     */
     private void playerSuggestionAccepted(UnoCard playerCard, Player player){
         takeCardsFromPlayer(playerCard, player);
         playedCards.add(playerCard);
@@ -233,9 +320,19 @@ public class CardHandler {
                     + " " + previousCard.getColor() + "\u001b[0;1m");
         }
     }
+
+    /**
+     * Take the card from player hand
+     * @param card card played
+     * @param player current player
+     */
     private void takeCardsFromPlayer(UnoCard card, Player player){
         player.getHandCards().remove(card);
     }
+
+    /**
+     * if card is no value, let player chose color to the card on board.
+     */
     public void NoValueColor(){
         Player currentPlayer = nextAndPreviousPlayerHandler.getCurrentPlayer();
         currentPlayer.getPh().sendMessageToPlayer(Messages.CHOOSE_COLOR);
