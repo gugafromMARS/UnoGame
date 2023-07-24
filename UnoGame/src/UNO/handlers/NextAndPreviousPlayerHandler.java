@@ -15,6 +15,9 @@ public class NextAndPreviousPlayerHandler {
         this.players = players;
     }
 
+    /**
+     * set the next player
+     */
     private void nextPlayer(){
         if(gameDirection){
             currentPlayerId++;
@@ -28,7 +31,7 @@ public class NextAndPreviousPlayerHandler {
     }
 
     /**
-     * this method do something
+     * set the previous player
      */
     public void previousPlayer(){
         if(gameDirection){

@@ -24,6 +24,10 @@ public class DeckHandler {
         this.cardHandler = new CardHandler(deck, playedCards, this, players, messagesHandler, nextAndPreviousPlayerHandler);
     }
 
+    /**
+     * check if deck have cards to draw, if not, shuffle deck and insert a new one on board.
+     */
+
     public void checkDeck(){
         if(playedCards.size() == 0){
             messagesHandler.messageToAll(Messages.PLAYED_CARDS_IS_EMPTY);

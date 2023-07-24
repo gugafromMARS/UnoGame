@@ -55,6 +55,7 @@ public class UnoGame implements Runnable{
         finishGame();
     }
 
+
     private void startHandlers(){
         userHandler = new UserHandler(playerHandlers);
         messagesHandler = new MessagesHandler(playerHandlers);
@@ -81,11 +82,22 @@ public class UnoGame implements Runnable{
         giveCardsToPlayer();
     }
 
+    /**
+     * Check if player hand have only one card, says UNO to everyone
+     * @param p receives a player for check is hand cards size
+     */
+
     private void checkPlayerUno(Player p){
         if(p.getHandCards().size()==1){
             messagesHandler.messageToAll("\u001b[0;1m" + p.getPh().getUsername() + " says UNO !!");
         }
     }
+
+    /**
+     * Check if player hand have no card, says WIN THE GAME to everyone.
+     * @param p receives a player for check is hand cards size
+     */
+
     private void checkPlayerWin(Player p){
         if(p.getHandCards().size()==0){
             isGameOn = false;
@@ -117,6 +129,11 @@ public class UnoGame implements Runnable{
         }
         return cardsToPlayer;
     }
+
+    /**
+     * Get current player, give him the info about his cards, and after player ends round, game
+     * check if player get uno or if wins
+     */
 
     private void playRound() {
         while (isGameOn){
