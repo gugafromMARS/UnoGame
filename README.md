@@ -20,10 +20,10 @@ Services used.
 
 This game is implemented for 3 players. And you can run asynchronized way, so you can run multiple uno game for 3 players.
 
-1- Run Server Class,
-2- Run Client Class (3x).
-3- You can choose your nickname for which player, and then the game give cards randomly for all 3 players.
-4- Have fun :D
+1. Run Server Class,
+2. Run Client Class (3x).
+3. You can choose your nickname for which player, and then the game give cards randomly for all 3 players.
+4. Have fun :D
 
 ## App functionalitys
 
