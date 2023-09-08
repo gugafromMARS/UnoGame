@@ -43,14 +43,14 @@ In this app you have several options :
 
 **gugafromMars**
 
-[Github1] (https://github.com/gugafromMARS)
+![Github1] (https://github.com/gugafromMARS)
 
 **gabrielsaramago**
 
-[Github2] (https://github.com/gabrielsaramago)
+![Github2] (https://github.com/gabrielsaramago)
 
 **paulobavr**
 
-[Github2] (https://github.com/paulobavr)
+![Github2] (https://github.com/paulobavr)
 
 Thanks to visiting and happy coding!
